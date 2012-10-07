@@ -15,18 +15,9 @@ import os
 import sys
 import traceback
 
-from mozbuild.base import BuildConfig
-from mozbuild.config import ConfigSettings
-from mozbuild.logger import LoggingManager
-
+from mach.logger import LoggingManager
 from mach.registrar import populate_argument_parser
 
-
-# Classes inheriting from ConfigProvider that provide settings.
-# TODO this should come from auto-discovery somehow.
-SETTINGS_PROVIDERS = [
-    BuildConfig,
-]
 
 # Settings for argument parser that don't get proxied to sub-module. i.e. these
 # are things consumed by the driver itself.
@@ -124,8 +115,7 @@ You tell mach the command you want to perform and it does it for you.
 
 Some common commands are:
 
-    %(prog)s build     Build/compile the source tree.
-    %(prog)s test      Run tests.
+    %(prog)s build     Build B2G.
     %(prog)s help      Show full help, including the list of all commands.
 
 To see more help for a specific command, run:
@@ -141,9 +131,11 @@ To see more help for a specific command, run:
         self.cwd = cwd
         self.log_manager = LoggingManager()
         self.logger = logging.getLogger(__name__)
-        self.settings = ConfigSettings()
 
         self.log_manager.register_structured_logger(self.logger)
+
+        mach_logger = logging.getLogger('mach')
+        self.log_manager.register_structured_logger(mach_logger)
 
         if not MODULES_SCANNED:
             self._load_modules()
@@ -241,9 +233,6 @@ To see more help for a specific command, run:
         self.log_manager.add_terminal_logging(level=log_level,
             write_interval=args.log_interval)
 
-        self.load_settings(args)
-        conf = BuildConfig(self.settings)
-
         stripped = {k: getattr(args, k) for k in vars(args) if k not in
             CONSUMED_ARGUMENTS}
 
@@ -251,7 +240,7 @@ To see more help for a specific command, run:
         # All classes must be Base-derived and take the expected argument list.
         if hasattr(args, 'cls'):
             cls = getattr(args, 'cls')
-            instance = cls(self.cwd, self.settings, self.log_manager)
+            instance = cls(self.cwd, None, self.log_manager)
             fn = getattr(instance, getattr(args, 'method'))
 
         # If the command is associated with a function, call it.
@@ -355,39 +344,6 @@ To see more help for a specific command, run:
         for l in traceback.format_list(stack):
             fh.write(l)
 
-    def load_settings(self, args):
-        """Determine which settings files apply and load them.
-
-        Currently, we only support loading settings from a single file.
-        Ideally, we support loading from multiple files. This is supported by
-        the ConfigSettings API. However, that API currently doesn't track where
-        individual values come from, so if we load from multiple sources then
-        save, we effectively do a full copy. We don't want this. Until
-        ConfigSettings does the right thing, we shouldn't expose multi-file
-        loading.
-
-        We look for a settings file in the following locations. The first one
-        found wins:
-
-          1) Command line argument
-          2) Environment variable
-          3) Default path
-        """
-        for provider in SETTINGS_PROVIDERS:
-            provider.register_settings()
-            self.settings.register_provider(provider)
-
-        p = os.path.join(self.cwd, 'mach.ini')
-
-        if args.settings_file:
-            p = args.settings_file
-        elif 'MACH_SETTINGS_FILE' in os.environ:
-            p = os.environ['MACH_SETTINGS_FILE']
-
-        self.settings.load_file(p)
-
-        return os.path.exists(p)
-
     def get_argument_parser(self):
         """Returns an argument parser for the command-line interface."""
 
@@ -403,9 +359,6 @@ To see more help for a specific command, run:
 
         global_group.add_argument('-h', '--help', action='help',
             help='Show this help message and exit.')
-
-        global_group.add_argument('--settings', dest='settings_file',
-            metavar='FILENAME', help='Path to settings file.')
 
         global_group.add_argument('-v', '--verbose', dest='verbose',
             action='store_true', default=False,
