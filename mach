@@ -20,6 +20,7 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 # TODO Bug 794506 Integrate with the in-tree virtualenv configuration.
 SEARCH_PATHS = [
     'python/mach',
+    'python/b2g',
     'python/mozinfo',
     'python/mozprocess',
 ]
