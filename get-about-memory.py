@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 '''Get a dump of about:memory from all the processes running on your device.
 
@@ -38,9 +41,9 @@ def shell(cmd, cwd=None):
 
 def get_pids():
     """Get the pids of all gecko processes running on the device.
-    
+
     Returns a tuple (master_pid, child_pids), where child_pids is a list.
-    
+
     """
     procs = shell("adb shell ps").split('\n')
     master_pid = None
@@ -65,7 +68,7 @@ def list_files():
 
 def send_signal(args, pid):
     # killer is a program we put on the device which is like kill(1), except it
-    # accepts signals above 31.  It also understands "SIGRTn" to mean 
+    # accepts signals above 31.  It also understands "SIGRTn" to mean
     # SIGRTMIN + n.
     #
     # SIGRT0 dumps memory reports, and SIGRT1 first minimizes memory usage and
