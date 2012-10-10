@@ -1,4 +1,8 @@
 #!/bin/bash
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # This simple script knows how to take a toolchain, add the packaging
 # jazz needed to get it onto TBPL builders and show the commands that
 # will upload.  This script requires ssh access to the remote host
